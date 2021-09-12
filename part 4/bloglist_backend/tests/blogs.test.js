@@ -6,6 +6,18 @@ const app = require('../app')
 
 const api = supertest(app)
 
+const Blog = require('../models/blog')
+
+
+beforeEach(async () => {
+	await Blog.deleteMany({})
+	console.log('Cleared the DB')
+
+	for(let blog of helper.blogs) {
+		let blogObject = new Blog(blog)
+		await blogObject.save()
+	}
+})
 
 test('Blogs are returned as json', async () => {
 	await api
@@ -14,12 +26,24 @@ test('Blogs are returned as json', async () => {
 		.expect('Content-Type', /application\/json/)
 })
 
-test.only('Blogs have the property as id', async () => {
+test('Blogs have the property as id', async () => {
 	const response = await api.get('/api/blogs')
 
 	expect(response.body[0].id).toBeDefined()
 
 })
+
+test('A blog can be added succesfully', async () => {
+	const newBlog = helper.listWithOneBlog[0]
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(201)
+		.expect('Content-Type', /application\/json/)
+})
+
+
 
 test('dummy return 1', () => {
 	const blogs = []
