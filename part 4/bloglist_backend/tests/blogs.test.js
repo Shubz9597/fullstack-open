@@ -68,6 +68,28 @@ test('To check if the default value of blog is coming 0', async () => {
 	expect(blogsAtEnd[helper.blogs.length].likes).toBe(0)
 })
 
+test('To check if the title and url property missing is coming fine with correct status code', async () => {
+	const blog = {
+		author : 'Rick Ashtley',
+		url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(blog)
+		.expect(400)
+
+	const blogWithoutURL = {
+		title : 'Rickroll',
+		author : 'Rick Ashtley',
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(blogWithoutURL)
+		.expect(400)
+})
+
 
 test('dummy return 1', () => {
 	const blogs = []
