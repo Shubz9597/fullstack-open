@@ -41,8 +41,32 @@ test('A blog can be added succesfully', async () => {
 		.send(newBlog)
 		.expect(201)
 		.expect('Content-Type', /application\/json/)
+
+	const blogsAtEnd = await helper.blogsInDb()
+	expect(blogsAtEnd).toHaveLength(helper.blogs.length + 1)
+
+	const titles = blogsAtEnd.map(n => n.title)
+	expect(titles).toContain(
+		'Go To Statement Considered Harmful'
+	)
 })
 
+
+test('To check if the default value of blog is coming 0', async () => {
+	const blog = {
+		title : 'Rickroll',
+		author : 'Rick Ashtley',
+		url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(blog)
+		.expect(201)
+
+	const blogsAtEnd = await helper.blogsInDb()
+	expect(blogsAtEnd[helper.blogs.length].likes).toBe(0)
+})
 
 
 test('dummy return 1', () => {
