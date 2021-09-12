@@ -67,11 +67,18 @@ const blogs = [
 	}
 ]
 
-test.only('notes are returned as json', async () => {
+test('Blogs are returned as json', async () => {
 	await api
 		.get('/api/blogs')
 		.expect(200)
 		.expect('Content-Type', /application\/json/)
+})
+
+test.only('Blogs have the property as id', async () => {
+	const response = await api.get('/api/blogs')
+
+	expect(response.body[0].id).toBeDefined()
+
 })
 
 test('dummy return 1', () => {
