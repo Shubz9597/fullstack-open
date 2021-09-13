@@ -11,91 +11,88 @@ const Blog = require('../models/blog')
 
 beforeEach(async () => {
 	await Blog.deleteMany({})
-	console.log('Cleared the DB')
-
-	for(let blog of helper.blogs) {
-		let blogObject = new Blog(blog)
-		await blogObject.save()
-	}
+	await Blog.insertMany(helper.blogs)
 })
 
-test('Blogs are returned as json', async () => {
-	await api
-		.get('/api/blogs')
-		.expect(200)
-		.expect('Content-Type', /application\/json/)
+describe('when there is intially some notes saved', () => {
+	test('Blogs are returned as json', async () => {
+		await api
+			.get('/api/blogs')
+			.expect(200)
+			.expect('Content-Type', /application\/json/)
+	})
+
+	test('Blogs have the property as id', async () => {
+		const response = await api.get('/api/blogs')
+
+		expect(response.body[0].id).toBeDefined()
+
+	})
 })
 
-test('Blogs have the property as id', async () => {
-	const response = await api.get('/api/blogs')
+describe('addition of a new note', () => {
+	test('A blog can be added succesfully', async () => {
+		const newBlog = helper.listWithOneBlog[0]
 
-	expect(response.body[0].id).toBeDefined()
+		await api
+			.post('/api/blogs')
+			.send(newBlog)
+			.expect(201)
+			.expect('Content-Type', /application\/json/)
 
+		const blogsAtEnd = await helper.blogsInDb()
+		expect(blogsAtEnd).toHaveLength(helper.blogs.length + 1)
+
+		const titles = blogsAtEnd.map(n => n.title)
+		expect(titles).toContain(
+			'Go To Statement Considered Harmful'
+		)
+	})
+
+	test('To check if the default value of likes in a blog is coming 0', async () => {
+		const blog = {
+			title : 'Rickroll',
+			author : 'Rick Ashtley',
+			url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+		}
+		await api
+			.post('/api/blogs')
+			.send(blog)
+			.expect(201)
+
+		const blogsAtEnd = await helper.blogsInDb()
+		expect(blogsAtEnd[helper.blogs.length].likes).toBe(0)
+	})
+
+	test('To check if the title and url property missing is coming fine with correct status code', async () => {
+		const blog = {
+			author : 'Rick Ashtley',
+			url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+		}
+
+		await api
+			.post('/api/blogs')
+			.send(blog)
+			.expect(400)
+
+		const blogWithoutURL = {
+			title : 'Rickroll',
+			author : 'Rick Ashtley',
+		}
+
+		await api
+			.post('/api/blogs')
+			.send(blogWithoutURL)
+			.expect(400)
+	})
 })
 
-test('A blog can be added succesfully', async () => {
-	const newBlog = helper.listWithOneBlog[0]
-
-	await api
-		.post('/api/blogs')
-		.send(newBlog)
-		.expect(201)
-		.expect('Content-Type', /application\/json/)
-
-	const blogsAtEnd = await helper.blogsInDb()
-	expect(blogsAtEnd).toHaveLength(helper.blogs.length + 1)
-
-	const titles = blogsAtEnd.map(n => n.title)
-	expect(titles).toContain(
-		'Go To Statement Considered Harmful'
-	)
+describe('Check for a particular blog', () => {
+	test('dummy return 1', () => {
+		const blogs = []
+		expect(listHelper.dummy(blogs)).toBe(1)
+	})
 })
-
-
-test('To check if the default value of blog is coming 0', async () => {
-	const blog = {
-		title : 'Rickroll',
-		author : 'Rick Ashtley',
-		url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-	}
-
-	await api
-		.post('/api/blogs')
-		.send(blog)
-		.expect(201)
-
-	const blogsAtEnd = await helper.blogsInDb()
-	expect(blogsAtEnd[helper.blogs.length].likes).toBe(0)
-})
-
-test('To check if the title and url property missing is coming fine with correct status code', async () => {
-	const blog = {
-		author : 'Rick Ashtley',
-		url : 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-	}
-
-	await api
-		.post('/api/blogs')
-		.send(blog)
-		.expect(400)
-
-	const blogWithoutURL = {
-		title : 'Rickroll',
-		author : 'Rick Ashtley',
-	}
-
-	await api
-		.post('/api/blogs')
-		.send(blogWithoutURL)
-		.expect(400)
-})
-
-
-test('dummy return 1', () => {
-	const blogs = []
-	expect(listHelper.dummy(blogs)).toBe(1)
-})
-
 
 describe('total likes', () => {
 
