@@ -7,6 +7,7 @@ const app = require('../app')
 const api = supertest(app)
 
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 
 beforeEach(async () => {
@@ -123,6 +124,34 @@ describe('most likes', () => {
 	test('of the blog with a bigger list', () => {
 		var result = listHelper.favoriteBlog(helper.blogs)
 		expect(result).toEqual(helper.blogs[2])
+	})
+})
+
+describe('Addition of a User', () => {
+	test('of the user with short Username than required length', async () => {
+		const user = {
+			name: 'test',
+			password: 'test123',
+			username: 'te'
+		}
+
+		await api
+			.post('/api/users')
+			.send(user)
+			.expect(400)
+	})
+
+	test('of the user with short password than the required length', async () => {
+		const user = {
+			name: 'test',
+			password: 'te',
+			username: 'tesdfs'
+		}
+
+		await api
+			.post('/api/users')
+			.send(user)
+			.expect(401)
 	})
 })
 
