@@ -1,8 +1,7 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const jwt = require('jsonwebtoken')
-const User = require('../models/user')
-
+const middleware = require('../utils/middleware')
 
 blogsRouter.get('/', async (request, response) => {
 	const blogs = await Blog
@@ -11,9 +10,10 @@ blogsRouter.get('/', async (request, response) => {
 
 })
 
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', middleware.userExtractor, async (request, response) => {
 	const body = request.body
 	const decodedToken = jwt.verify(request.token, process.env.SECRET)
+
 
 	if(!request.token || !decodedToken.id) {
 		return response.status(401).send({
@@ -23,7 +23,7 @@ blogsRouter.post('/', async (request, response) => {
 
 	console.log(decodedToken)
 
-	const user = await User.findById(decodedToken.id)
+	const user = request.user
 
 	const blog = new Blog({
 		title: body.title,
@@ -40,11 +40,12 @@ blogsRouter.post('/', async (request, response) => {
 	response.json(savedBlog)
 })
 
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', middleware.userExtractor, async (request, response) => {
 	const blog = await Blog.findById(request.params.id)
+	const user = request.user
 	const decodedToken = jwt.verify(request.token, process.env.SECRET)
 
-	if(!request.token || !decodedToken.id || blog.user.toString() !== decodedToken.id) {
+	if(!request.token || !decodedToken || blog.user.toString() !== user._id.toString()) {
 		return response.status(401).send({ error : 'Invalid token or Unauthorized User' })
 	}
 
@@ -54,7 +55,6 @@ blogsRouter.delete('/:id', async (request, response) => {
 
 blogsRouter.put('/:id', async (request, response) => {
 	const body = request.body
-	console.log(body)
 	const blog = {
 		likes: body.likes
 	}
